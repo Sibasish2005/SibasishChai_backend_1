@@ -1,6 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { apiError } from "../utils/apiError.js";
-import { user, User }  from "../models/user.models.js"
+import { User }  from "../models/user.models.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 
@@ -19,17 +19,13 @@ const registerUser = asyncHandler(async (req, res) => {
   const { fullName, email, username, password } = req.body;
   console.log("email:",email);
   
-//   if(fullName===""){
-//     throw new apiError(400,"fullname required")
-//   }
-
 if(
     [fullName,email,username,password].some((field)=>
        field?.trim() === "")
 ){
    throw new apiError(400,"all fields are required") 
 }
-const existedUser =  User.findOne({
+const existedUser =await User.findOne({
     $or:[{ username },{ email }]
  }) 
 
@@ -56,7 +52,7 @@ const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 if(!avtaar){
     throw new apiError(400,"Avtaar is required")
 }
-const user = await User.create({
+const newUser = await User.create({
    fullName,
    avtaar:avtaar.url,
    coverImage:coverImage?.url || "",
@@ -65,7 +61,7 @@ const user = await User.create({
    username:username.toLowerCase(),
 })
 
- const createdUser = await user.findById(user._id).select(
+ const createdUser = await newUser.findById(user._id).select(
    "-password -refreshToken"
  )
  if(!createdUser){
